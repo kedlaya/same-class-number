@@ -1,5 +1,5 @@
 # same-class-number
-This paper includes code related to the papers "The relative class number one problem for function fields, I" by Kiran S. Kedlaya and "The relative class number one problem for function fields, II" (in progress). Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.5beta2) and Magma (tested using version 2.25-5).
+This paper includes code related to the papers "The relative class number one problem for function fields, I" by Kiran S. Kedlaya and "The relative class number one problem for function fields, II" (in progress). Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.4) and Magma (tested using version 2.25-5).
 
 - `auxiliary.sage`: Shared subroutines used by multiple notebooks.
 - `Linear programming.ipynb`: Compute bounds on numbers of rational points on curves over finite fields using the linear programming method.
