@@ -15,16 +15,23 @@ def trace_from_weil_poly(u, n):
 def point_count_from_weil_poly(u, n, q=2):
     tmp = trace_from_weil_poly(u, n)
     return [q^i+1-tmp[i-1] for i in range(1, n+1)]
+
+# Given the first n point counts of a curve over F_q, return the first n place counts.
+def place_count_from_point_count(s, n):
+    return [sum(moebius(j)*s[i//j-1] for j in divisors(i))//i for i in range(1, n+1)]
     
 # Given the Weil polynomial of a curve over F_q, return the first n place counts.
 def place_count_from_weil_poly(u, n, q=2):
-    s = point_count_from_weil_poly(u, n, q=q)
-    return [sum(moebius(j)*s[i//j-1] for j in divisors(i))//i for i in range(1, n+1)]
+    return place_count_from_point_count(point_count_from_weil_poly(u, n, q=q), n)
     
 # Given the Weil polynomial of a curve over F_q, return True if its first n place counts are nonnegative.
 def check_curve_positivity(u, n, q=2):
     s = place_count_from_weil_poly(u, n, q=q)
     return all(_ >= 0 for _ in s)
+
+# Given the first n place counts of a curve over F_q, return the first n point counts.
+def point_count_from_place_count(s, n):
+    return [sum(s[j-1]*j for j in divisors(i)) for i in range(1,n+1)]
     
 # Given point counts of a curve of a given degree, return its Weil polynomial.
 def weil_poly_from_point_count(l, d, q=2):
@@ -139,12 +146,12 @@ def magma_poly_list(f):
     return [i for i in f.Coefficients()]
 
 # Compute cyclic covers of a Magma function field with fixed ramification divisor.
-def cyclic_covers_by_ramification(F, d, M, delta=0):
+def cyclic_covers_by_ramification(F, d, M, q=2, delta=0):
     R,mR = M.RayClassGroup(nvals=2)
     gens = [i for i in R.Generators()]
     U1 = R.sub([d*gens[i] for i in range(len(gens))])
     g = Integer(F.Genus())
-    g1 = g + (d-1)*(g-1) + delta
+    g1 = g + (d-1)*(g-1) + delta//(1 if q%2==0 else 2)
     for j in itertools.product(range(d), repeat=len(gens)):
         if all(i==0 for i in j):
             continue
@@ -162,8 +169,8 @@ def cyclic_covers_by_ramification(F, d, M, delta=0):
 # Compute cyclic covers of a Magma function field of a fixed degree.
 # If delta = 0, the covers must be everywhere unramified.
 # If delta > 0, the covers have delta geometric ramification points on the base;
-# this assumes delta <= 2 and that the characteristic is 2.
-def cyclic_covers(F, d, delta=0):
+# this assumes delta <= 2.
+def cyclic_covers(F, d, delta=0, q=2):
     P.<T> = PolynomialRing(QQ)
     ans = []
     places1 = [i for i in F.Places(1)]
@@ -175,7 +182,7 @@ def cyclic_covers(F, d, delta=0):
         m = [z]
     elif delta == 1 and d == 2: #Wild ramification
         m = [z+2*i for i in places1]
-    elif delta == 2 and d == 3: #Tame ramification
+    elif delta == 2 and (q%2 == 0 and d == 3) or (q%2 != 0 and d == 2): #Tame ramification
         m = [z+i+j for (i,j) in itertools.combinations_with_replacement(places1, 2)] + \
             [z+i for i in places2]
     elif delta == 2 and d == 2: #Wild ramification
@@ -184,7 +191,7 @@ def cyclic_covers(F, d, delta=0):
     else:
         raise ValueError
     for M in m:
-        for F1 in cyclic_covers_by_ramification(F, d, M, delta=delta):
+        for F1 in cyclic_covers_by_ramification(F, d, M, q=q, delta=delta):
             yield F1
 
 
