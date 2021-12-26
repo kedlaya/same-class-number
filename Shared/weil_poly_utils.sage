@@ -1,4 +1,8 @@
-# In this file, we define some auxiliary functions for dealing with Weil polynomials.
+# This file accompanies the papers "The relative class number problem for function fields, I" and
+# "The relative class number problem for function fields, II" by Kiran S. Kedlaya.
+#
+# This file defines Sage functions to manipulate Weil polynomials, their point counts, and their
+# Frobenius traces.
 
 import itertools
 
@@ -43,6 +47,24 @@ def weil_poly_from_point_count(l, d, q=2):
     for i in range(1, d+1):
         l2.append(2^i*v[d-i])
     return P(l2).reverse()
+
+# Identify all Weil polynomials with specified initial Frobenius traces.
+ 
+def weil_polys_from_traces(P, d, q, l):
+    Q.<t> = PowerSeriesRing(QQ)
+    u = sum(-l[i-1]*t^i/i for i in range(1,len(l)+1))
+    v = exp(u)
+    l2 = v.polynomial().list()[:len(l)+1]
+    l2 = [ZZ(i) for i in l2]
+    if len(l2) > d//2 + 1:
+        l2 = l2[:d//2 + 1]
+    l3 = P.weil_polynomials(d=d, q=q, lead=l2)
+    return [w for w in l3 if w.is_weil_polynomial() and trace_from_weil_poly(w, len(l)) == list(l)]
+
+# Identify all Weil polynomials with specified initial point counts.
+
+def weil_polys_from_point_counts(P, d, q, l):
+    return weil_polys_from_traces(P, d, q, [q^i+1-l[i-1] for i in range(1, len(l)+1)])
 
 # Return the LMFDB label corresponding to a given Weil polynomial.
 def label_from_weil_poly(f):
@@ -139,59 +161,7 @@ def _nojac_serre(pol, q=2, alert=False, blocklist=None):
         if alert:
             print(res, h0, h1)
         if alert and res <= 10:
-            print("Alert: {} {} {} {}".format(res, pol, h0.reciprocal_transform(q=2), h1.reciprocal_transform(q=2)))
-            
-# Convert a Magma polynomial to a list of coefficients.
-def magma_poly_list(f):
-    return [i for i in f.Coefficients()]
-
-# Compute cyclic covers of a Magma function field with fixed ramification divisor.
-def cyclic_covers_by_ramification(F, d, M, q=2, delta=0):
-    R,mR = M.RayClassGroup(nvals=2)
-    gens = [i for i in R.Generators()]
-    U1 = R.sub([d*gens[i] for i in range(len(gens))])
-    g = Integer(F.Genus())
-    g1 = g + (d-1)*(g-1) + delta//(1 if q%2==0 else 2)
-    for j in itertools.product(range(d), repeat=len(gens)):
-        if all(i==0 for i in j):
-            continue
-        i = min(i1 for i1 in range(len(gens)) if j[i1] != 0)
-        if j[i] > 1 or gcd(d, gcd(j)) > 1:
-            continue
-        U2 = R.sub([gens[i1] - j[i1]*gens[i] for i1 in range(len(gens))])
-        U3 = R.sub([U1, U2])
-        A = M.AbelianExtension(U3)
-        F1 = magma.FunctionField(A)
-        if F1.Genus() == g1:
-            F1.AssignNames('w')
-            yield F1
-
-# Compute cyclic covers of a Magma function field of a fixed degree.
-# If delta = 0, the covers must be everywhere unramified.
-# If delta > 0, the covers have delta geometric ramification points on the base;
-# this assumes delta <= 2.
-def cyclic_covers(F, d, delta=0, q=2):
-    P.<T> = PolynomialRing(QQ)
-    ans = []
-    places1 = [i for i in F.Places(1)]
-    num_places1 = len(places1)
-    places2 = [i for i in F.Places(2)]
-    num_places2 = len(places2)
-    z = F.DivisorGroup().Identity()
-    if delta == 0:
-        m = [z]
-    elif delta == 1 and d == 2: #Wild ramification
-        m = [z+2*i for i in places1]
-    elif delta == 2 and (q%2 == 0 and d == 3) or (q%2 != 0 and d == 2): #Tame ramification
-        m = [z+i+j for (i,j) in itertools.combinations_with_replacement(places1, 2)] + \
-            [z+i for i in places2]
-    elif delta == 2 and d == 2: #Wild ramification
-        m = [z+2*i+2*j for (i,j) in itertools.combinations_with_replacement(places1, 2)] + \
-            [z+2*i for i in places2]
-    else:
-        raise ValueError
-    for M in m:
-        for F1 in cyclic_covers_by_ramification(F, d, M, q=q, delta=delta):
-            yield F1
-
+            print("Alert: {} {} {} {}".format(res, pol, h0.reciprocal_transform(q=2), \
+                                                        h1.reciprocal_transform(q=2)))
+   
 
