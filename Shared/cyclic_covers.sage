@@ -71,3 +71,20 @@ def match_weil_poly(F, d, delta=0, verbose=False):
             ans.append((F, F1))
     return(ans)
 
+# Reduce a list of Magma function fields to a list of isomorphism class representatives.
+def isomorphism_class_reps(l):
+    d = defaultdict(list)
+    # Hash by point counts.
+    for F in l:
+        g = Integer(F.Genus())
+        t = tuple(Integer(F.NumberOfPlacesOfDegreeOneECF(i)) for i in range(1, g+1))
+        d[t].append(F)
+    ans = []
+    for t in d:
+        tmp = []
+        for F in d[t]:
+            if not any(str(F.IsIsomorphic(F1)) == "true" for F1 in tmp):
+                tmp.append(F)
+        ans += tmp
+    return ans
+

@@ -8,9 +8,9 @@ def random_generating_sequence(G):
     return l
     
 # Given a subspace of $F^n$ represented by an $m \times n$ matrix, compute the subgroup of $GL(n,F)$ stabilizing 
-# this subspace for the *right* action. Make sure to transpose if you want a left action!
+# this subspace for the *right* action. For a left action, set `transpose` to True.
 
-def vec_stab(M):
+def vec_stab(M, transpose=False):
     F = M.base_ring()
     m,n = M.dimensions()
     # Conjugate to a standard matrix.
@@ -24,8 +24,11 @@ def vec_stab(M):
         [block_matrix(2,2,[identity_matrix(m),0,0,g.matrix()], subdivide=False) for g in GL(n-m, F).gens()]
     l0.append(identity_matrix(n))
     l0[-1][m,0] = 1
-    G = GL(n, F).subgroup([~M1*g*M1 for g in l0])
-    assert all((M*g.matrix()).echelon_form() == M.echelon_form() for g in G.gens())
+    if transpose:
+        G = GL(n, F).subgroup([(~M1*g*M1).transpose() for g in l0])
+    else:
+        G = GL(n, F).subgroup([~M1*g*M1 for g in l0])
+        assert all((M*g.matrix()).echelon_form() == M.echelon_form() for g in G.gens())
     return G
 
 # Given a generalized Cayley graph for a group G acting on a set of vertices, return a list of connected
@@ -34,36 +37,38 @@ def vec_stab(M):
 # arbitrary vertices in their components.
 
 def group_retract(G, vertices, edges, exclude=[], forbid=None):
-    vertices = list(vertices) + exclude
-    Gamma = Graph([vertices, edges], loops=True, format='vertices_and_edges')
-    assert all(x in vertices for x in Gamma)
-    conn = Gamma.connected_components()
-    reps = [l[0] for l in conn]
-    if exclude and forbid:
-        for M in exclude + reps:
-            if (M in exclude) or (M in reps and forbid(M)):
-                Gamma.add_edge(exclude[0], M)
+    vertices = list(vertices)
+    # Add dummy edges to link all excluded vertices.
+    edges2 = [(exclude[0], exclude[i]) for i in range(1, len(exclude))]
+    # Construct the digraph.
+    Gamma = DiGraph([vertices, edges + edges2], loops=True, format='vertices_and_edges')
+    # Check that we did not implicitly add any vertices.
+    assert set(Gamma.vertices()) == set(vertices)
+    # Compute connected components.
+    conn = Gamma.connected_components(sort=False)
     forbidden_verts = []
-    for v in exclude:
-        forbidden_verts += Gamma.connected_component_containing_vertex(v, sort=False)
-    Gamma.delete_vertices(forbidden_verts)
-    conn = Gamma.connected_components()
-    reps = [l[0] for l in conn]
+    reps = []
+    # Remove all components containing an excluded or forbidden vertex.
+    for l in conn:
+        if (exclude and exclude[0] in set(l)) or (forbid and forbid(l[0])):
+            forbidden_verts += l
+        else:
+            reps.append(l[0])
+    forbidden_verts = set(forbidden_verts)
+    # Compute the retract on the remaining components.
     d = {M: (M, G(1)) for M in reps}
     queue = reps[:]
     while queue:
         M = queue.pop(0)
         assert M in d
-        nb = [M1 for M1 in Gamma.neighbors(M) if M1 not in d]
-        for M1 in nb:
-            assert M1 not in queue
-            queue.append(M1)
-            g = Gamma.edge_label(M, M1)
-            if (M1, M, g) in edges:
-               g = ~g
-            elif (M, M1, g) not in edges:
-                raise AssertionError
-            d[M1] = (d[M][0], g*d[M][1])
+        for (_, M1, g) in Gamma.outgoing_edge_iterator(M):
+            if M1 not in d:
+                queue.append(M1)
+                d[M1] = (d[M][0], g*d[M][1])
+        for (M1, _, g) in Gamma.incoming_edge_iterator(M):
+            if M1 not in d:
+                queue.append(M1)
+                d[M1] = (d[M][0], ~g*d[M][1])
     assert all(M in d or M in forbidden_verts for M in vertices)
     return reps, d, forbidden_verts
 
@@ -77,22 +82,22 @@ def group_retract(G, vertices, edges, exclude=[], forbid=None):
 
 # Use an enhanced $n$-orbit tree to identify an orbit representative for the action of the group $G$ on $k$-tuples of Lagrangian subspaces. 
 #
-def orbit_rep_from_tree(G, tree, mats, apply_group_elem, find_green=True):
+def orbit_rep_from_tree(G, tree, mats, apply_group_elem, optimized_rep, find_green=True):
     n = len(mats)
     if n not in tree:
         raise ValueError("Tree not computed")
     if n == 0:
-        return mats, G(1)
+        return mats, optimized_rep(G(1))
     mats0 = mats[:-1]
     if mats0 in tree[n-1] and 'gpel' not in tree[n-1][mats0]: # Truncation is an ineligible node
         return None, None
     if mats0 in tree[n-1] and 'stab' in tree[n-1][mats0]: # Truncation is a green node
         assert 'retract' in tree[n-1][mats0]
-        g0 = G(1)
+        g0 = optimized_rep(G(1))
         y = mats[-1]
         assert y not in mats0
     else: # Truncation needs to be resolved
-        mats0, g0 = orbit_rep_from_tree(G, tree, mats[:-1], apply_group_elem)
+        mats0, g0 = orbit_rep_from_tree(G, tree, mats[:-1], apply_group_elem, optimized_rep)
         if mats0 is None:
             return None, None
         assert 'gpel' in tree[n-1][mats0]
@@ -112,18 +117,20 @@ def orbit_rep_from_tree(G, tree, mats, apply_group_elem, find_green=True):
 # Given an orbit lookup tree at depth $n$ (for the action of a finite group $G$ on a finite set $S$), extend it in place
 # to depth $n+1$. For $n=0$, pass for `tree` an empty dict and it will be initialized correctly.
 #
-# The argument `methods` is a dictionary with the following keys:
+# The argument `methods` is a dictionary containing functions as specified:
 # - `apply_group_elem`: given a pair $(g, x) \in G \times S$, returns $g(x)$.
 # - `stabilizer`: given $x \in S$, returns a group whose intersection with $G$ (in some ambient group) is $G_x$.
+# - `optimized_rep` (optional): given an element $g \in G$, return an optimized representation of $g$.
 # - `forbid` (optional): given a tuple $(x_1,\dots,x_k)$, return True if the underlying subset $\{x_1,\dots,x_k\}$ is forbidden. It is assumed that this function is symmetric in the input tuple. If some of these checks are time-consuming them, only run them when the optional argument `easy` is True.
 
 def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
     apply_group_elem = methods['apply_group_elem']
     stabilizer = methods['stabilizer']
+    optimized_rep = methods['optimized_rep'] if 'optimized_rep' in methods else lambda g: g
     forbid = methods['forbid'] if 'forbid' in methods else (lambda x, easy=False: False)
     if not tree: # Initialize
         S0 = tuple()
-        tree[0] = {S0: {'gpel': (S0, G(1)), 'stab': []}}
+        tree[0] = {S0: {'gpel': (S0, optimized_rep(G(1))), 'stab': []}}
     n = max(tree.keys())
     if verbose:
         print("Current level: {}".format(n))
@@ -143,15 +150,19 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
                 if verbose:
                     print("Trivial stabilizer")
                 tmp = vertices
-                d = {M: (M, G(1)) for M in vertices}
+                d = {M: (M, optimized_rep(G(1))) for M in vertices}
             else: # Construct the group retract under this green node.
-                gens = random_generating_sequence(G1)
+                gens = [optimized_rep(g) for g in random_generating_sequence(G1)]
                 assert all(apply_group_elem(g, M) in mats for g in gens for M in mats)
                 if verbose:
                     print("Number of generators: {}".format(len(gens)))
                 G1 = G.subgroup(gens)
                 edges = [(M, apply_group_elem(g, M), g) for M in vertices for g in gens]
+                if verbose:
+                    print("Edges computed")
                 tmp, d, _ = group_retract(G, vertices, edges)
+                if verbose:
+                    print("Retract computed")
             tree[n][mats]['stab'] = G1
             tree[n][mats]['retract'] = d
             for M in tmp:
@@ -161,16 +172,15 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
                 tree[n+1][mats1] = {}
     if verbose:
         print("Number of new nodes: {}".format(len(tree[n+1])))
-    dummy_vertex = tuple()
     edges = []
-    exclude = [dummy_vertex]
+    exclude = []
     for mats in tree[n+1]:
         if forbid(mats, easy=True):
             exclude.append(mats)
         else:
             tmp = [tuple(mats[n if i==j else j if i==n else i] for i in range(n+1)) for j in range(n)]
             for i in tmp:
-                mats1, g1 = orbit_rep_from_tree(G, tree, i, apply_group_elem, find_green=False)
+                mats1, g1 = orbit_rep_from_tree(G, tree, i, apply_group_elem, optimized_rep, find_green=False)
                 if mats1 is None:
                     exclude.append(mats)
                 else:
@@ -213,9 +223,11 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
 def build_orbit_tree(G, S, n, methods, verbose=True, terminate=True):    
     # Verify that each generator of G defines a permutation of S.
     apply_group_elem = methods['apply_group_elem']
+    optimized_rep = methods['optimized_rep'] if 'optimized_rep' in methods else lambda g: g
     for g in G.gens():
-        Sg = [apply_group_elem(g, x) for x in S]
-        assert all(x in S for x in Sg) and all(x in Sg for x in S)
+        gm = optimized_rep(g)
+        Sg = [apply_group_elem(gm, x) for x in S]
+        assert set(S) == set(Sg)
     tree = {}
     for i in range(n):
         extend_orbit_tree(G, S, tree, methods, verbose=verbose, terminate=(terminate and (i == n-1)))
