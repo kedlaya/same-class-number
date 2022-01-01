@@ -1,8 +1,6 @@
 # same-class-number
 
-This paper includes code related to the papers "The relative class number one problem for function fields, I, II, III" by Kiran S. Kedlaya.
-
-Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.4). When indicated, there is also an external dependency on Magma (tested using version 2.25-5).
+This paper includes code related to the papers "The relative class number one problem for function fields, I, II, III" by Kiran S. Kedlaya. Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.4). When indicated, there is also an external dependency on Magma (tested using version 2.25-5).
 
 In the subdirectory "Shared":
 - `cyclic_covers.sage`: Sage subroutines for finding cyclic covers of function fields. Uses Magma.
@@ -35,3 +33,4 @@ In the subdirectory "Part III":
   - `Genus 7 generic, part 1.ipynb` performs the orbit lookup tree calculation. Creates a temporary file `6-tuples.txt`.
   - `Genus 7 generic, part 2.ipynb` find curves with 7 F_2-points. Requires `6-tuples.txt`.
   - `Genus 7 generic, part 3.ipynb` find curves with 6 F_2-points. Requires `6-tuples.txt`.
+
