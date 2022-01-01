@@ -9,6 +9,7 @@ In the subdirectory "Shared":
 - `splitting_sequences.sage`: Sage subroutines for computing splitting sequences for finite extensions of function fields.
 - `weil_poly_utils.sage`: Sage subroutines for managing Weil polyonmials. This includes converting back and forth between Weil polynomials, point counts, Frobenius traces, and LMFDB labels for isogeny classes of abelian varieties; it also includes calling Sage's Weil polynomials iterator under specific conditions (e.g., with specified Frobenius traces).
 - `polys.xlsx`: Excel spreadsheet listing candidate Weil polynomials for purely geometric extensions of function fields over F_2, and indicating which of these correspond to cyclic covers (when known).
+- `HyperellipticCurvesData.txt`, `TrigonalCurvesWithAutomorphisms.txt`: data files from Dragutinović (see below).
 
 In the subdirectory "Part I":
 
@@ -29,7 +30,7 @@ In the subdirectory "Part III":
 - The other files in this folder are Jupyter notebooks covering one (or more) Brill-Noether strata in genus 5, 6, or 7. Dependencies and other notes:
  - All of these depend on `polys.xlsx`. A few of them also update `polys.xlsx`.
  - Most of these depend on Magma.
- - `Genus 5 hyperelliptic or trigonal.ipynb` and `Genus 5 generic.ipynb` depend on data from Dragutinović (https://github.com/DusanDragutinovic/MT_Curves).
+ - `Genus 5 hyperelliptic or trigonal.ipynb` depends on data from Dragutinović (https://github.com/DusanDragutinovic/MT_Curves).
  - Generic curves of genus 7 are handled in a series of three notebooks. 
   - `Genus 7 generic, part 1.ipynb` performs the orbit lookup tree calculation. Creates a temporary file `6-tuples.txt`.
   - `Genus 7 generic, part 2.ipynb` find curves with 7 F_2-points. Requires `6-tuples.txt`.

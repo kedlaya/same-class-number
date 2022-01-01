@@ -80,7 +80,7 @@ def group_retract(G, vertices, edges, exclude=[], forbid=None):
 #  - `stab` (for $U$ green) the stabilizer of $U$.
 #  - `retract` (for $U$ green and $k<n$): a dictionary whose value at $y \in S \setminus U$ (resp $y \in S/U$) is an element $g \in G_U$ such that $U \cup \{g^{-1}(y)\}$ (resp. $\pi_U^{-1}(g^{-1}(y))$) is a red or green node.
 
-# Use an enhanced $n$-orbit tree to identify an orbit representative for the action of the group $G$ on $k$-tuples of Lagrangian subspaces. 
+# Use an enhanced $n$-orbit tree to identify an orbit representative for the action of the group $G$ on $k$-tuples.
 #
 def orbit_rep_from_tree(G, tree, mats, apply_group_elem, optimized_rep, find_green=True):
     n = len(mats)
