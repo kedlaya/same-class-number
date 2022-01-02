@@ -60,7 +60,7 @@ def cyclic_covers(F, d, delta=0, q=2):
             yield F1
 
 # Exhaust over abelian extensions of a Magma function field of a fixed prime degree to find 
-# instances of a particular relative Weil polynomial.
+# instances of relative class number 1.
 
 def match_weil_poly(F, d, delta=0, verbose=False):
     ans = []
