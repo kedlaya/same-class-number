@@ -31,6 +31,6 @@ In the subdirectory "Part III":
   - Most of these depend on Magma.
   - Generic curves of genus 7 are handled in a series of three notebooks:
      - `Genus 7 generic, part 1.ipynb` performs the orbit lookup tree calculation. Creates a temporary file `6-tuples.txt`.
-     - `Genus 7 generic, part 2.ipynb` find curves with 7 F_2-points. Requires `6-tuples.txt`.
-     - `Genus 7 generic, part 3.ipynb` find curves with 6 F_2-points. Requires `6-tuples.txt`.
+     - `Genus 7 generic, part 2.ipynb` find curves with 6 F_2-points. Requires `6-tuples.txt`.
+     - `Genus 7 generic, part 3.ipynb` find curves with 7 F_2-points. Requires `6-tuples.txt`.
 
