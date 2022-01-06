@@ -170,6 +170,10 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
                     raise ValueError("Found repeated entry in tuple")
                 mats1 = mats + (M,)
                 tree[n+1][mats1] = {}
+    # If no forbidden vertices, check the orbit-stabilizer formula.
+    if 'forbid' not in methods:
+        if not sum(N // tree[n+1][mats]['stab'].order() for mats in tree[n+1] if 'stab' in tree[n+1][mats]) == binomial(len(S), n+1):
+            raise RuntimeError("Error in orbit-stabilizer formula")
     if verbose:
         print("Number of new nodes: {}".format(len(tree[n+1])))
     edges = []
