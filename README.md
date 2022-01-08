@@ -26,10 +26,8 @@ In the subdirectory "Part III":
 - `orbits.sage`: Sage subroutines for computing orbit representatives for the action of a finite group on subsets of a finite set.
 - `linalg.sage`: Sage subroutines for linear algebra.
 - `preamble.sage`: Common declarations for the notebooks in this folder. This includes some initialization code   plus a function `closeout` run at the end to report results.
-- The other files in this folder are Jupyter notebooks covering one (or more) Brill-Noether strata in genus 6 or 7.
-  - All of these require `polys.xlsx`. A few of them also update `polys.xlsx`.
-  - Most of these depend on Magma.
-  - Generic curves of genus 7 are handled in a series of three notebooks:
+- The other files in this folder are Jupyter notebooks covering one (or more) Brill-Noether strata in genus 6 or 7. These require `polys.xlsx` and depend on Magma.
+  - Generic (non-tetragonal) curves of genus 7 are handled in a series of three notebooks:
      - `Genus 7 generic, part 1.ipynb` performs the orbit lookup tree calculation. Creates a temporary file `6-tuples.txt`.
      - `Genus 7 generic, part 2.ipynb` find curves with 6 F_2-points. Requires `6-tuples.txt`.
      - `Genus 7 generic, part 3.ipynb` find curves with 7 F_2-points. Requires `6-tuples.txt`.

@@ -107,7 +107,7 @@ def closeout(curves=None, X=None, genus=None):
         F1.AssignNames("y")
         g = Integer(F1.Genus())
         t = tuple(F1.NumberOfPlacesOfDegreeOneECF(i) for i in range(1, g+1))
-        print(t, F1.RationalExtensionRepresentation())
+        print(t, F1.RationalExtensionRepresentation().DefiningPolynomial())
     # Convert into numerical data in preparation for updating the spreadsheet.
     l4 = []
     for (F1, F2) in l3:
@@ -115,9 +115,7 @@ def closeout(curves=None, X=None, genus=None):
         u1 = Q(magma_poly_list(F1.ZetaFunction().Numerator())).reverse()
         v1 = Q(magma_poly_list(F2.ZetaFunction().Numerator())).reverse()
         l4.append((2, g, 2*g-1, point_count_from_weil_poly(u1, 13), point_count_from_weil_poly(v1, 13)))
-    # Write the results back to the spreadsheet. In the process, we check that every covering we found gives a 
-    # pair of Weil polynomials from our original list.
-    used_pols = []
+    # Verify that every cover we found is already accounted for in the spreadsheet.
     for i in range(len(df)):
         r = df.iloc[i]
         d = r["d"]
@@ -127,12 +125,7 @@ def closeout(curves=None, X=None, genus=None):
         ct2 = eval(r["Counts of C'"])
         tmp = (d, g, g1, ct1, ct2)
         if tmp in l4:
-            df.loc[i, "Cyclic"] = "Yes"
-            used_pols.append(tmp)
-        if df.loc[i, "Cyclic"] == "Unknown":
-            df.loc[i, "Cyclic"] = "No"
-    assert all(t in used_pols for t in l4)
-    df.to_excel('../Shared/polys.xlsx', sheet_name='Weil polynomials', merge_cells=True, freeze_panes=(int(1),int(1)))
+            assert df.loc[i, "Cyclic"] == "Yes"
     # Announce that we're done, and report the timing.
     print("All covers recorded!")
     report_time()
