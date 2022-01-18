@@ -12,8 +12,9 @@ In the subdirectory "Part I":
 
 - `Linear programming.ipynb`: Compute bounds on numbers of rational points on curves over finite fields using the linear programming method.
 - `Relative class number 1 for q>2.ipynb`: Compute candidate Weil polynomials for purely geometric extensions of function fields over F_q for q>2, and search for cyclic covers among these. Uses Magma.
-- `Weil polynomial bound for q=2.ipynb`: Compute candidate Weil polynomials for purely geometric extensions of function fields over F_2. Updates `polys.xlsx`.
-- `Cyclic covers for q=2.ipynb`: Search for cyclic covers among candidate Weil polynomials listed in `polys.xlsx`. Uses Magma and data from Dragutinović (https://github.com/DusanDragutinovic/MT_Curves). Requires and updates `polys.xlsx`.
+- `Genus 5 data.ipynb`: Process data files from Dragutinović (see above) to build a table of genus 5 curves over F_2 sorted by their Weil polynomials. Creates a (large) temporary file `genus5byweilpoly.txt`.
+- `Weil polynomial bound for q=2.ipynb`: Compute candidate Weil polynomials for purely geometric extensions of function fields over F_2. Requires the temporary file `genus5byweilpolyt.txt`. Updates `polys.xlsx`.
+- `Cyclic covers for q=2.ipynb`: Search for cyclic covers among candidate Weil polynomials listed in `polys.xlsx`. Uses Magma and data from Dragutinović (https://github.com/DusanDragutinovic/MT_Curves). Requires the temporary file `genus5byweilpolyt.txt`. Requires and updates `polys.xlsx`.
 - `HyperellipticCurvesData.txt`, `TrigonalCurvesWithAutomorphisms.txt`, `Complete_Intersections.txt`, `Pts_Count_Complete_Intersections.txt`: data files from Dragutinović (see below).
 
 In the subdirectory "Part II":

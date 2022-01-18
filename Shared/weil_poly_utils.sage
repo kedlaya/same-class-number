@@ -49,7 +49,6 @@ def weil_poly_from_point_count(l, d, q=2):
     return P(l2).reverse()
 
 # Identify all Weil polynomials with specified initial Frobenius traces.
- 
 def weil_polys_from_traces(P, d, q, l):
     Q.<t> = PowerSeriesRing(QQ)
     u = sum(-l[i-1]*t^i/i for i in range(1,len(l)+1))
@@ -62,7 +61,6 @@ def weil_polys_from_traces(P, d, q, l):
     return [w for w in l3 if w.is_weil_polynomial() and trace_from_weil_poly(w, len(l)) == list(l)]
 
 # Identify all Weil polynomials with specified initial point counts.
-
 def weil_polys_from_point_counts(P, d, q, l):
     return weil_polys_from_traces(P, d, q, [q^i+1-l[i-1] for i in range(1, len(l)+1)])
 
@@ -113,7 +111,7 @@ def modified_reduced_resultant(h1, h2, q=2):
     return n
     
 # Given a Weil polynomial, return True if the Serre-Howe-Lauter resultant criterion indicates that there is
-# no Jacobian over F_q with this Weli polynomial.
+# no Jacobian over F_q with this Weil polynomial.
 # The resultant 1 case is based on code from LMFDB due to Everett Howe (ported from Magma).
 # We also implement a form of the resultant 2 case, using the Castelnuovo-Severi inequality and
 # the Deuring-Shafarevich formula.
