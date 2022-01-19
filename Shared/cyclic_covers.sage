@@ -53,6 +53,8 @@ def cyclic_covers(F, d, delta=0, q=2):
     elif delta == 2 and d == 2: #Wild ramification
         m = [z+2*i+2*j for (i,j) in itertools.combinations_with_replacement(places1, 2)] + \
             [z+2*i for i in places2]
+    elif delta == 1 and d > 3: # This case cannot occur.
+        m = []
     else:
         raise ValueError
     for M in m:
