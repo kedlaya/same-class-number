@@ -1,6 +1,6 @@
 # same-class-number
 
-This paper includes code related to the papers "The relative class number one problem for function fields, I, II, III" by Kiran S. Kedlaya. Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.5beta9). When indicated, there is also an external dependency on Magma (tested using version 2.26-9).
+This paper includes code related to the papers "The relative class number one problem for function fields, I, II, III" by Kiran S. Kedlaya. Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.5rc2). When indicated, there is also an external dependency on Magma (tested using version 2.26-9).
 
 In the subdirectory "Shared":
 
@@ -28,8 +28,12 @@ In the subdirectory "Part III":
 - `linalg.sage`: Sage subroutines for linear algebra.
 - `preamble.sage`: Common declarations for the notebooks in this folder. This includes some initialization code   plus a function `closeout` run at the end to report results.
 - The other files in this folder are Jupyter notebooks covering one (or more) Brill-Noether strata in genus 6 or 7. These require `polys.xlsx` and depend on Magma.
-  - Generic (non-tetragonal) curves of genus 7 are handled in a series of three notebooks:
+  - Generic curves of genus 6 are handled in a series of three notebooks:
+     - `Genus 6 generic, part 1.ipynb` performs the orbit lookup tree calculation. Creates a temporary file `genus6-tuples.txt`.
+     - `Genus 6 generic, part 2.ipynb` find curves with 4 F\_2-points which form a g\^1\_4. Requires `genus6-tuples.txt`.
+     - `Genus 6 generic, part 3.ipynb` find all other curves. Requires `genus6-tuples.txt`.
+  - Generic curves of genus 7 are handled in a series of three notebooks:
      - `Genus 7 generic, part 1.ipynb` performs the orbit lookup tree calculation. Creates a temporary file `6-tuples.txt`.
-     - `Genus 7 generic, part 2.ipynb` find curves with 6 F_2-points. Requires `6-tuples.txt`.
-     - `Genus 7 generic, part 3.ipynb` find curves with 7 F_2-points. Requires `6-tuples.txt`.
+     - `Genus 7 generic, part 2.ipynb` find curves with 6 F\_2-points. Requires `6-tuples.txt`.
+     - `Genus 7 generic, part 3.ipynb` find curves with 7 F\_2-points. Requires `6-tuples.txt`.
 
