@@ -1,7 +1,7 @@
 # This file accompanies the papers "The relative class number problem for function fields, II"
 # by Kiran S. Kedlaya.
 #
-# This file defines Sage functions manipulate splitting sequences for extensions of function fields.
+# This file defines Sage functions to manipulate splitting sequences; see sections 3 and 4.
 
 # Compute the place count of a covering curve from a sequence of splittings.
 
@@ -79,3 +79,54 @@ def splittings_to_quadratic_resolvent(ct1, s):
     ct = point_count_from_place_count(ctp, n)
     return tuple(ct1[i] - ct[i] for i in range(n))
 
+# Convert a splitting sequence of a degree-5 covering with Galois group A_5 to the traces of the
+# abelian varieties B1 and B2 (see Remark 7.1).
+
+def splittings_to_B1_B2(ct1, ct2, s):
+    d = {(5,): [(5,1), (5,) * 4],
+         (3,1,1): [(3,3), (3,) * 6 + (1,) * 2],
+         (2,2,1): [(2,) * 2 + (1,) * 2, (2,) * 10],
+         (1,1,1,1,1): [(1,) * 6, (1,) * 20]}
+    n = len(s)
+    ct1p = place_count_from_point_count(ct1, n)
+    ct2p = place_count_from_point_count(ct2, n)
+    ct3p = [0 for _ in range(n)]
+    ct4p = [0 for _ in range(n)]
+    for i in range(n):
+        for p in s[i]:
+            pt = tuple(p)
+            for j in d[pt][0]:
+                if (i+1)*j <= n:
+                    ct3p[(i+1)*j-1] += 1
+            for j in d[pt][1]:
+                if (i+1)*j <= n:
+                    ct4p[(i+1)*j-1] += 1
+    ct3 = point_count_from_place_count(ct3p, n)
+    ct4 = point_count_from_place_count(ct4p, n)
+    trA = [ct1[i] - ct2[i] for i in range(n)]
+    trB1 = [ct1[i] - ct3[i] for i in range(n)]
+    trB2 = [ct1[i] - ct4[i] - 2*trA[i] - trB1[i] for i in range(n)]
+    return trB1, trB2
+
+# Convert a splitting sequence of a degree-6 covering with Galois group S_6 (if `S6 == True`) 
+# or PGL(2, 5) (if `S6 == False`) into the traces of the Prym for the sextic twin (see Remark 8.1).
+
+def splittings_to_sextic_twin(ct1, s, S6=True):
+    n = len(ct1)
+    d = {(6,): [3,2,1],
+         (3,2,1): [6],
+         (4,1,1): [4,1,1],
+         (2,2,2): [2,1,1,1,1],
+         (2,1,1,1,1): [2,2,2],
+         (5,1): [5,1],
+         (4,2): [4,2],
+         (3,3): [3,1,1,1],
+         (3,1,1,1): [3,3],
+         (2,2,1,1): [2,2,1,1],
+         (1,1,1,1,1,1): [1,1,1,1,1,1]}
+    s2 = [[d[tuple(p)] for p in s[i]] for i in range(len(s))]
+    ct2p = place_count_from_splittings(s2)
+    ct2 = point_count_from_place_count(ct2p, n)
+    if S6:
+        return [ct1[i] - ct2[i] for i in range(n)]
+    return [2*ct1[i] - ct2[i] for i in range(n)]
