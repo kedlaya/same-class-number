@@ -5,6 +5,7 @@
 # Frobenius traces.
 
 import itertools
+from sage.rings.polynomial.weil.weil_polynomials import WeilPolynomials
 
 # Given the Weil polynomial of an abelian variety, return the first n Frobenius traces.
 def trace_from_weil_poly(u, n):
@@ -57,8 +58,11 @@ def weil_polys_from_traces(P, d, q, l):
     l2 = [ZZ(i) for i in l2]
     if len(l2) > d//2 + 1:
         l2 = l2[:d//2 + 1]
-    l3 = P.weil_polynomials(d=d, q=q, lead=l2)
-    return [w for w in l3 if w.is_weil_polynomial() and trace_from_weil_poly(w, len(l)) == list(l)]
+    for w in WeilPolynomials(d=d, q=q, lead=l2):
+        if w.is_weil_polynomial() and trace_from_weil_poly(w, len(l)) == list(l):
+            yield P(w)
+#    l3 = P.weil_polynomials(d=d, q=q, lead=l2)
+#    return [w for w in l3 if w.is_weil_polynomial() and trace_from_weil_poly(w, len(l)) == list(l)]
 
 # Identify all Weil polynomials with specified initial point counts.
 def weil_polys_from_point_counts(P, d, q, l):
