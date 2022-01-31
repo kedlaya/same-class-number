@@ -7,20 +7,22 @@ In the subdirectory "Shared":
 - `cyclic_covers.sage`: Sage subroutines for finding cyclic covers of function fields. Requires Magma.
 - `weil_poly_utils.sage`: Sage subroutines for managing Weil polynomials. This includes converting back and forth between Weil polynomials, point counts, Frobenius traces, and LMFDB labels for isogeny classes of abelian varieties; it also includes calling Sage's Weil polynomials iterator under specific conditions (e.g., with specified Frobenius traces).
 - `polys.xlsx`: Excel spreadsheet listing candidate Weil polynomials for purely geometric extensions of function fields over F_2, and indicating which of these correspond to cyclic covers (when known). This is generated and modified by various notebooks.
+- `Curves by genus.ipynb`: Process data files from Xarles (see below) and Dragutinović (see below) to build a table of curves of genus up to 5 over F\_2 sorted by their Weil polynomials. Requires Magma. Creates a temporary file `curves.txt`.
+- `function_fields.sage`: Loads `curves.txt` and provides an access function to create Magma function fields with a given zeta function.
+- `ListCurvesGenus4p2.txt`: data file from [Xarles](https://github.com/XavierXarles/Censusforgenus4curvesoverF2).
+- `HyperellipticCurvesData.txt`, `TrigonalCurvesWithAutomorphisms.txt`, `Complete_Intersections.txt`, `Pts_Count_Complete_Intersections.txt`: data files from [Dragutinović](https://github.com/DusanDragutinovic/MT_Curves).
 
 In the subdirectory "Part I":
 
 - `Linear programming.ipynb`: Compute bounds on numbers of rational points on curves over finite fields using the linear programming method.
 - `Relative class number 1 for q>2.ipynb`: Compute candidate Weil polynomials for purely geometric extensions of function fields over F_q for q>2, and search for cyclic covers among these. Requires Magma.
-- `Genus 5 data.ipynb`: Process data files from Dragutinović (see below) to build a table of genus 5 curves over F\_2 sorted by their Weil polynomials. Requires Magma. Creates a (large) temporary file `genus5byweilpoly.txt`.
-- `Weil polynomial bound for q=2.ipynb`: Compute candidate Weil polynomials for purely geometric extensions of function fields over F\_2. Requires `genus5byweilpolyt.txt`. Updates `polys.xlsx`.
-- `Cyclic covers for q=2.ipynb`: Search for cyclic covers among candidate Weil polynomials listed in `polys.xlsx`. Requires Magma and `genus5byweilpoly.txt`. Requires and updates `polys.xlsx`.
-- `HyperellipticCurvesData.txt`, `TrigonalCurvesWithAutomorphisms.txt`, `Complete_Intersections.txt`, `Pts_Count_Complete_Intersections.txt`: data files from Dragutinović (https://github.com/DusanDragutinovic/MT_Curves).
+- `Weil polynomial bound for q=2.ipynb`: Compute candidate Weil polynomials for purely geometric extensions of function fields over F\_2. Requires `curves.txt`. Updates `polys.xlsx`.
+- `Cyclic covers for q=2.ipynb`: Search for cyclic covers among candidate Weil polynomials listed in `polys.xlsx`. Requires Magma and `curves.txt`. Requires and updates `polys.xlsx`.
 
 In the subdirectory "Part II":
 
 - `splitting_sequences.sage`: Sage subroutines for computing splitting sequences for finite extensions of function fields.
-- `Non-Galois covers for q=2.ipynb`: Perform various computations needed to rule out the existence of noncyclic covers over F_2. Requires Magma and  `polys.xlsx`. 
+- `Non-Galois covers for q=2.ipynb`: Perform various computations needed to rule out the existence of noncyclic covers over F_2. Requires Magma, `curves.txt`, and `polys.xlsx`. 
  
 In the subdirectory "Part III":
 

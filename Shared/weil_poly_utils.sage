@@ -38,7 +38,7 @@ def check_curve_positivity(u, n, q=2):
 def point_count_from_place_count(s, n):
     return [sum(s[j-1]*j for j in divisors(i)) for i in range(1,n+1)]
     
-# Given point counts of a curve of a given degree, return its Weil polynomial.
+# Given point counts of a curve of a given genus, return its Weil polynomial.
 def weil_poly_from_point_count(l, d, q=2):
     P.<T> = QQ[]
     Q.<t> = PowerSeriesRing(QQ)
@@ -84,6 +84,22 @@ def label_from_weil_poly(f):
         if i<g-1:
             s += '_'
     return s
+    
+# Return the Weil polynomial corresponding to an LMFDB label.
+def weil_poly_from_label(P, s):
+    l = s.split(".")
+    g = int(l[0])
+    q = int(l[1])
+    l2 = l[2].split("_")
+    l3 = [1]
+    for s1 in l2:
+        sg = -1 if s1[0] == 'a' else 1
+        t = [ord(j)-97 for j in s1]
+        t.reverse()
+        l3.append(sg*ZZ(t, base=26))
+    l4 = l3 + [q^i*l3[-i-1] for i in range(1,len(l3))]
+    l4.reverse()
+    return P(l4)
     
 # Compute the "modified reduced resultant" of two real Weil polynomials in the sense of Howe-Lauter.
 # This function is taken from LMFDB and is originally due to Everett Howe (ported from Magma).
