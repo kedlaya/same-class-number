@@ -35,9 +35,8 @@ In the subdirectory "Part III":
   - Plane quintics are handled in `Genus 6 plane quintic.ipynb`.
   - Generic curves are handled in a series of three notebooks:
      - `Genus 6 generic, part 1.ipynb` performs the orbit lookup tree calculation. Creates a temporary file `genus6-tuples.txt` used by the other notebooks.
-     - `Genus 6 generic, part 2.ipynb` find curves with 4 F\_2-points which form a g\^1\_4.
-     - `Genus 6 generic, part 3.ipynb` find curves with 4 F\_2-points which do not form a g\^1\_4.
-     - `Genus 6 generic, part 4.ipynb` find all other curves.
+     - `Genus 6 generic, part 2.ipynb` find curves with 5 F\_2-points.
+     - `Genus 6 generic, part 3.ipynb` find curves with 4 or 6 F\_2-points.
 - A series of Jupyter notebooks covering the Brill-Noether strata in genus 7. These all require Magma and `polys.xlsx`.
   - There is no notebook for hyperelliptic curves because these are handled in the text with no computation at all. Similarly, there is no notebook for trigonal curves of Maroni invariant 3.
   - Trigonal curves of Maroni invariant 1 are handled in `Genus 7 trigonal.ipynb`.

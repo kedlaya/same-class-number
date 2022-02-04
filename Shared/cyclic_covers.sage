@@ -55,8 +55,8 @@ def cyclic_covers(F, d, delta=0, q=2):
             [z+2*i for i in places2]
     elif delta == 1 and d > 3: # This case cannot occur.
         m = []
-    else:
-        raise ValueError
+    else: # Would need more logic to handle more cases.
+        raise NotImplementedError
     for M in m:
         for F1 in cyclic_covers_by_ramification(F, d, M, q=q, delta=delta):
             yield F1
