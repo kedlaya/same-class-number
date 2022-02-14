@@ -45,7 +45,7 @@ def cyclic_covers(F, d, delta=0, q=2):
     z = F.DivisorGroup().Identity()
     if delta == 0:
         m = [z]
-    elif delta == 1 and d == 2: #Wild ramification
+    elif delta == 1 and d == 2 and q%2 == 0: #Wild ramification
         m = [z+2*i for i in places1]
     elif delta == 2 and (q%2 == 0 and d == 3) or (q%2 != 0 and d == 2): #Tame ramification
         m = [z+i+j for (i,j) in itertools.combinations_with_replacement(places1, 2)] + \
@@ -64,9 +64,9 @@ def cyclic_covers(F, d, delta=0, q=2):
 # Exhaust over abelian extensions of a Magma function field of a fixed prime degree to find 
 # instances of relative class number 1.
 
-def match_weil_poly(F, d, delta=0, verbose=False):
+def match_weil_poly(F, d, delta=0, verbose=False, q=2):
     ans = []
-    for F1 in cyclic_covers(F, d, delta=delta):
+    for F1 in cyclic_covers(F, d, delta=delta, q=q):
         if verbose:
             print(F1.ZetaFunction().Numerator() // F.ZetaFunction().Numerator())
         if F1.ClassNumber() == F.ClassNumber():
