@@ -1,6 +1,6 @@
 # same-class-number
 
-This paper includes code related to the papers "The relative class number one problem for function fields, I, II, III" by Kiran S. Kedlaya. Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.6). When indicated, there is also an external dependency on Magma (tested using version 2.26-12).
+This paper includes code related to the papers "The relative class number one problem for function fields, I, II, III" by Kiran S. Kedlaya. Most of the code is packaged in Jupyter notebooks; these are intended to be run using SageMath (tested using version 9.7). When indicated, there is also an external dependency on Magma (tested using version 2.27-1).
 
 In the subdirectory "Shared":
 
