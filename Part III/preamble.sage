@@ -107,7 +107,8 @@ def closeout(curves=None, X=None, genus=None):
         F1.AssignNames("y")
         g = Integer(F1.Genus())
         t = tuple(F1.NumberOfPlacesOfDegreeOneECF(i) for i in range(1, g+1))
-        print(t, F1.RationalExtensionRepresentation().DefiningPolynomial())
+        print(t, F1.RationalExtensionRepresentation().DefiningPolynomial(), 
+            F1.AutomorphismGroup().IdentifyGroup())
     # Convert into numerical data in preparation for updating the spreadsheet.
     l4 = []
     for (F1, F2) in l3:
