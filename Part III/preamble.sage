@@ -61,7 +61,7 @@ def report_time():
         print("Total time: {} seconds".format(seconds))
     else:
         minutes = ceil(seconds//60)
-        print("Total time: {} minutes".format(minutes))
+        print("Total time: {} minutes ({} seconds)".format(minutes,seconds))
 
 def closeout(curves=None, X=None, genus=None):
     if not curves:
@@ -73,19 +73,22 @@ def closeout(curves=None, X=None, genus=None):
     Q.<T> = QQ[]
     for s in curves:
         for gens in curves[s]:
-            if not X:
+            if not X: # In this case, assume gens is already a function field.
                 F = gens
             else:
                 Y = X.Scheme(gens)
-                if Y.Dimension() > 1 or str(Y.IsIrreducible()) == "false":
+                # Only keep Y if it is integral of dimension 1.
+                if Y.Dimension() > 1 or str(Y.IsIrreducible()) == "false" or str(Y.IsReduced()) == "false":
                     continue
                 C = Y.Curve()
                 F0 = C.FunctionField()
+                # Convert F0 into Magma's preferred internal representation.
                 F = F0.AlgorithmicFunctionField()
             g = Integer(F.Genus())
             if genus and (genus != g):
                 continue
             ct = tuple(Integer(F.NumberOfPlacesOfDegreeOneECF(i)) for i in range(1, g+1))
+            # Cross-check the point counts we already computed.
             assert ct[:len(s)] == s
             if ct in targets_dict[g]:
                 l.append(F)

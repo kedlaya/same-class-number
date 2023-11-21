@@ -48,3 +48,4 @@ In the subdirectory "Part III":
      - `Genus 7 generic, part 2.ipynb` find curves with 6 F\_2-points.
      - `Genus 7 generic, part 3.ipynb` find curves with 7 F\_2-points.
 
+The author hereby consigns all original code and data included in this repository to the public domain.

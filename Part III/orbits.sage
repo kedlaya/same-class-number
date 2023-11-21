@@ -43,7 +43,7 @@ def group_retract(G, vertices, edges, exclude=[], forbid=None):
     # Construct the digraph.
     Gamma = DiGraph([vertices, edges + edges2], loops=True, format='vertices_and_edges')
     # Check that we did not implicitly add any vertices.
-    assert set(Gamma.vertices()) == set(vertices)
+    assert set(Gamma.vertices(sort=False)) == set(vertices)
     # Compute connected components.
     conn = Gamma.connected_components(sort=False)
     forbidden_verts = []
