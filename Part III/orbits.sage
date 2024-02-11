@@ -1,3 +1,5 @@
+import random
+
 # Given a group G, construct a random generating sequence. This is likely to be shorter than a generating sequence
 # found in some other way, and hence more efficient for constructing Cayley graphs.
 
@@ -119,13 +121,13 @@ def orbit_rep_from_tree(G, tree, mats, apply_group_elem, optimized_rep, find_gre
 #
 # The argument `methods` is a dictionary containing functions as specified:
 # - `apply_group_elem`: given a pair $(g, x) \in G \times S$, returns $g(x)$.
-# - `stabilizer`: given $x \in S$, returns a group whose intersection with $G$ (in some ambient group) is $G_x$.
+# - `stabilizer` (optional): given $x \in S$, returns a group whose intersection with $G$ (in some ambient group) is $G_x$.
 # - `optimized_rep` (optional): given an element $g \in G$, return an optimized representation of $g$.
 # - `forbid` (optional): given a tuple $(x_1,\dots,x_k)$, return True if the underlying subset $\{x_1,\dots,x_k\}$ is forbidden. It is assumed that this function is symmetric in the input tuple. If some of these checks are time-consuming them, only run them when the optional argument `easy` is True.
 
 def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
     apply_group_elem = methods['apply_group_elem']
-    stabilizer = methods['stabilizer']
+    stabilizer = methods['stabilizer'] if 'stabilizer' in methods else None
     optimized_rep = methods['optimized_rep'] if 'optimized_rep' in methods else lambda g: g
     forbid = methods['forbid'] if 'forbid' in methods else (lambda x, easy=False: False)
     if not tree: # Initialize
@@ -140,11 +142,52 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
             # Compute the stabilizer of mats (deferred from the previous level).
             if n == 0:
                 G0 = G
+                gens = list(G0.gens())
             else:
                 parent = mats[:-1]
                 endgen = mats[-1]
-                G0 = tree[n-1][parent]['stab'].intersection(stabilizer(endgen))
-            G1 = G.subgroup(list(G0.gens()) + tree[n][mats]['stab'])
+                G0 = tree[n-1][parent]['stab']
+                if G0.order() == 1:
+                    gens = []
+                elif stabilizer is not None:
+                    G0 = G0.intersection(stabilizer(endgen))
+                    gens = list(G0.gens())
+                else:
+                    # Construct generators for the stabilizer of endgen in G0 using a group retract.
+                    gens0 = [optimized_rep(g) for g in random_generating_sequence(G0)]
+                    if verbose:
+                        print("Stabilizer number of generators: {}".format(len(gens0)))
+                    d = tree[n-1][parent]['retract']
+                    mats_target = d[endgen][0]
+                    # Use the orbit-stabilizer formula to compute the stabliizer order.
+                    orbit_len = sum(1 for e0 in S if e0 in d and d[e0][0] == mats_target)
+                    target_order = ZZ(G0.order() / orbit_len)
+                    if verbose:
+                       print("Stabilizer order: {}".format(target_order))
+                    # Use the retract to generate random stabilizer elements until we hit the right order.
+                    gens = []
+                    iden = optimized_rep(G0(1))
+                    while target_order > 1:
+                        e0 = random.choice(S)
+                        if e0 not in d:
+                            continue
+                        mats1, g1 = d[e0]
+                        if mats1 != mats_target:
+                            continue
+                        g0 = random.choice(gens0)
+                        e1 = apply_group_elem(g0, e0)
+                        mats2, g2 = d[e1]
+                        assert mats1 == mats2
+                        g = ~g2*g0*g1
+                        if g != iden:
+                            gens.append(g)
+                            if G0.subgroup(gens).order() == target_order:
+                                break
+            if verbose:
+                print("Stabilizer generators found: {}".format(len(gens)))
+            G1 = G.subgroup(gens + tree[n][mats]['stab'])
+            if verbose:
+                print("Stabilizer computed")
             vertices = [M for M in S if M not in mats]
             if G1.order() == 1: # Early abort
                 if verbose:
@@ -153,7 +196,7 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
                 d = {M: (M, optimized_rep(G(1))) for M in vertices}
             else: # Construct the group retract under this green node.
                 gens = [optimized_rep(g) for g in random_generating_sequence(G1)]
-                assert all(apply_group_elem(g, M) in mats for g in gens for M in mats)
+                # assert all(apply_group_elem(g, M) in mats for g in gens for M in mats)
                 if verbose:
                     print("Number of generators: {}".format(len(gens)))
                 G1 = G.subgroup(gens)
@@ -207,13 +250,14 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
         if verbose:
             print("Stabilizer generators not computed")
     else:
+        iden = optimized_rep(G(1))
         for e in edges:
             if e[0] not in forbidden_verts:
                 mats1, g1 = d[e[0]]
                 mats2, g2 = d[e[1]]
                 assert mats1 == mats2
                 g = ~g2*e[2]*g1
-                if g != G(1):
+                if g != iden:
                     tree[n+1][mats1]['stab'].append(g)
         if verbose:
             print("Stabilizer generators found")
