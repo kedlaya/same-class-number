@@ -1,11 +1,13 @@
 import random
+from collections import deque
 
 # Given a group G, construct a random generating sequence. This is likely to be shorter than a generating sequence
 # found in some other way, and hence more efficient for constructing Cayley graphs.
 
 def random_generating_sequence(G):
     l = []
-    while G.subgroup(l).order() != G.order():
+    n = G.order()
+    while G.subgroup(l).order() != n:
         l.append(G.random_element())
     return l
     
@@ -33,10 +35,10 @@ def vec_stab(M, transpose=False):
         assert all((M*g.matrix()).echelon_form() == M.echelon_form() for g in G.gens())
     return G
 
-# Given a generalized Cayley graph for a group G acting on a set of vertices, return a list of connected
-# component representatives not containing any vertices listed in `exclude` or any vertices 
-# for which `forbid` returns True, and a dictionary computing these representatives to 
-# arbitrary vertices in their components.
+# Given a generalized Cayley graph for a group G acting (on the left) on a set of vertices, 
+# return a list of connected component representatives not containing any vertices 
+# listed in `exclude` or any vertices for which `forbid` returns True, and a dictionary 
+# identifying group elements carrying representatives to arbitrary vertices in their components.
 
 def group_retract(G, vertices, edges, exclude=[], forbid=None):
     vertices = list(vertices)
@@ -58,21 +60,56 @@ def group_retract(G, vertices, edges, exclude=[], forbid=None):
             reps.append(l[0])
     forbidden_verts = set(forbidden_verts)
     # Compute the retract on the remaining components.
-    d = {M: (M, G(1)) for M in reps}
-    queue = reps[:]
+    iden = G(1)
+    d = {M: (M, iden) for M in reps}
+    queue = deque(reps)
     while queue:
-        M = queue.pop(0)
-        assert M in d
+        M = queue.popleft()
+        dM0, dM1 = d[M]
         for (_, M1, g) in Gamma.outgoing_edge_iterator(M):
             if M1 not in d:
                 queue.append(M1)
-                d[M1] = (d[M][0], g*d[M][1])
+                d[M1] = (dM0, g*dM1)
         for (M1, _, g) in Gamma.incoming_edge_iterator(M):
             if M1 not in d:
                 queue.append(M1)
-                d[M1] = (d[M][0], ~g*d[M][1])
+                d[M1] = (dM0, ~g*dM1)
+    # Check that we are not missing any vertices.
     assert all(M in d or M in forbidden_verts for M in vertices)
+    # Return the results.
     return reps, d, forbidden_verts
+
+# Given a group retract for a Cayley graph for the (left) action of a group G on a set, 
+# compute generators of the stabilizer of an element v.
+
+def stabilizer_from_group_retract(G, d, v, apply_group_elem, optimized_rep, verbose=False):
+    gens0 = [optimized_rep(g) for g in random_generating_sequence(G)]
+    if verbose:
+        print("Stabilizer number of generators: {}".format(len(gens0)))
+    mats0, g0 = d[v]
+    S = list(d.keys())
+    # Use the orbit-stabilizer formula to compute the stabilizer order.
+    orbit_len = sum(1 for e0 in S if e0 in d and d[e0][0] == mats0)
+    target_order = ZZ(G.order() / orbit_len)
+    if verbose:
+        print("Stabilizer order: {}".format(target_order))
+    # Produce random stabilizer elements until we hit the right order.
+    gens = []
+    while target_order > 1:
+        e1 = random.choice(S)
+        mats1, g1 = d[e1]
+        if mats1 != mats0:
+            continue
+        rgen = random.choice(gens0)
+        e2 = apply_group_elem(rgen, e1)
+        mats2, g2 = d[e2]
+        assert mats2 == mats0
+        g = rgen*g1
+        if g != g2:
+            gens.append(g0*~g2*g*~g0)
+            if G.subgroup(gens).order() == target_order:
+                 break
+    return gens
 
 # The data structure for orbit lookup trees of depth $n$:
 # - The tree is a dictionary `tree` indexed by levels $0, \dots, n$.
@@ -83,7 +120,7 @@ def group_retract(G, vertices, edges, exclude=[], forbid=None):
 #  - `retract` (for $U$ green and $k<n$): a dictionary whose value at $y \in S \setminus U$ (resp $y \in S/U$) is an element $g \in G_U$ such that $U \cup \{g^{-1}(y)\}$ (resp. $\pi_U^{-1}(g^{-1}(y))$) is a red or green node.
 
 # Use an enhanced $n$-orbit tree to identify an orbit representative for the action of the group $G$ on $k$-tuples.
-#
+
 def orbit_rep_from_tree(G, tree, mats, apply_group_elem, optimized_rep, find_green=True):
     n = len(mats)
     if n not in tree:
@@ -121,7 +158,7 @@ def orbit_rep_from_tree(G, tree, mats, apply_group_elem, optimized_rep, find_gre
 #
 # The argument `methods` is a dictionary containing functions as specified:
 # - `apply_group_elem`: given a pair $(g, x) \in G \times S$, returns $g(x)$.
-# - `stabilizer` (optional): given $x \in S$, returns a group whose intersection with $G$ (in some ambient group) is $G_x$.
+# - `stabilizer` (optional): given $x \in S$, returns a group whose intersection with $G$ (in some ambient group) is $G_x$. If omitted, we instead use data from the group retract computation to find stabilizers.
 # - `optimized_rep` (optional): given an element $g \in G$, return an optimized representation of $g$.
 # - `forbid` (optional): given a tuple $(x_1,\dots,x_k)$, return True if the underlying subset $\{x_1,\dots,x_k\}$ is forbidden. It is assumed that this function is symmetric in the input tuple. If some of these checks are time-consuming them, only run them when the optional argument `easy` is True.
 
@@ -153,36 +190,8 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
                     G0 = G0.intersection(stabilizer(endgen))
                     gens = list(G0.gens())
                 else:
-                    # Construct generators for the stabilizer of endgen in G0 using a group retract.
-                    gens0 = [optimized_rep(g) for g in random_generating_sequence(G0)]
-                    if verbose:
-                        print("Stabilizer number of generators: {}".format(len(gens0)))
                     d = tree[n-1][parent]['retract']
-                    mats_target = d[endgen][0]
-                    # Use the orbit-stabilizer formula to compute the stabliizer order.
-                    orbit_len = sum(1 for e0 in S if e0 in d and d[e0][0] == mats_target)
-                    target_order = ZZ(G0.order() / orbit_len)
-                    if verbose:
-                       print("Stabilizer order: {}".format(target_order))
-                    # Use the retract to generate random stabilizer elements until we hit the right order.
-                    gens = []
-                    iden = optimized_rep(G0(1))
-                    while target_order > 1:
-                        e0 = random.choice(S)
-                        if e0 not in d:
-                            continue
-                        mats1, g1 = d[e0]
-                        if mats1 != mats_target:
-                            continue
-                        g0 = random.choice(gens0)
-                        e1 = apply_group_elem(g0, e0)
-                        mats2, g2 = d[e1]
-                        assert mats1 == mats2
-                        g = ~g2*g0*g1
-                        if g != iden:
-                            gens.append(g)
-                            if G0.subgroup(gens).order() == target_order:
-                                break
+                    gens = stabilizer_from_group_retract(G0, d, endgen, apply_group_elem, optimized_rep, verbose)
             if verbose:
                 print("Stabilizer generators found: {}".format(len(gens)))
             G1 = G.subgroup(gens + tree[n][mats]['stab'])
@@ -219,6 +228,7 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
         if not sum(N // tree[n][mats]['stab'].order() for mats in tree[n] if 'stab' in tree[n][mats]) == binomial(len(S), n):
             raise RuntimeError("Error in orbit-stabilizer formula")
     if verbose:
+        print()
         print("Number of new nodes: {}".format(len(tree[n+1])))
     edges = []
     exclude = []
@@ -265,6 +275,7 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
         print("Number of new green nodes: {}".format(sum(1 for mats in tree[n+1] 
                                                      if 'stab' in tree[n+1][mats])))
         print("New level: {}".format(max(tree.keys())))
+        print()
 
 # Build an orbit lookup tree to depth n. By default, we do not record stabilizer generators at depth n,
 # so the result cannot be used to extend to depth n+1.
