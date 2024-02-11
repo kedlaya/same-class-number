@@ -35,12 +35,36 @@ def vec_stab(M, transpose=False):
         assert all((M*g.matrix()).echelon_form() == M.echelon_form() for g in G.gens())
     return G
 
+# Complete the construction of a group retract from a generalized Cayley graph.
+# In most instances this is a rate-limiting step.
+# WARNING: Gamma is modified.
+
+def retract_from_graph(G, Gamma, reps, forward_only=False):
+    iden = G(1)
+    l = [(M, (M, iden)) for M in reps]
+    d = dict(l)
+    queue = deque(l)
+    while queue:
+        M, (dM0, dM1) = queue.popleft()
+        for (_, M1, g) in Gamma.outgoing_edge_iterator(M):
+            if M1 not in d:
+                t = (dM0, g*dM1)
+                d[M1] = t
+                queue.append((M1, t))
+        if not forward_only:
+            for (M1, _, g) in Gamma.incoming_edge_iterator(M):
+                if M1 not in d:
+                    t = (dM0, ~g*dM1)
+                    d[M1] = t
+                    queue.append((M1, t))
+    return d
+
 # Given a generalized Cayley graph for a group G acting (on the left) on a set of vertices, 
 # return a list of connected component representatives not containing any vertices 
 # listed in `exclude` or any vertices for which `forbid` returns True, and a dictionary 
 # identifying group elements carrying representatives to arbitrary vertices in their components.
 
-def group_retract(G, vertices, edges, exclude=[], forbid=None):
+def group_retract(G, vertices, edges, exclude=[], forbid=None, forward_only=False):
     vertices = list(vertices)
     # Add dummy edges to link all excluded vertices.
     edges2 = [(exclude[0], exclude[i]) for i in range(1, len(exclude))]
@@ -60,20 +84,7 @@ def group_retract(G, vertices, edges, exclude=[], forbid=None):
             reps.append(l[0])
     forbidden_verts = set(forbidden_verts)
     # Compute the retract on the remaining components.
-    iden = G(1)
-    d = {M: (M, iden) for M in reps}
-    queue = deque(reps)
-    while queue:
-        M = queue.popleft()
-        dM0, dM1 = d[M]
-        for (_, M1, g) in Gamma.outgoing_edge_iterator(M):
-            if M1 not in d:
-                queue.append(M1)
-                d[M1] = (dM0, g*dM1)
-        for (M1, _, g) in Gamma.incoming_edge_iterator(M):
-            if M1 not in d:
-                queue.append(M1)
-                d[M1] = (dM0, ~g*dM1)
+    d = retract_from_graph(G, Gamma, reps, forward_only)
     # Check that we are not missing any vertices.
     assert all(M in d or M in forbidden_verts for M in vertices)
     # Return the results.
@@ -160,7 +171,7 @@ def orbit_rep_from_tree(G, tree, mats, apply_group_elem, optimized_rep, find_gre
 # - `apply_group_elem`: given a pair $(g, x) \in G \times S$, returns $g(x)$.
 # - `stabilizer` (optional): given $x \in S$, returns a group whose intersection with $G$ (in some ambient group) is $G_x$. If omitted, we instead use data from the group retract computation to find stabilizers.
 # - `optimized_rep` (optional): given an element $g \in G$, return an optimized representation of $g$.
-# - `forbid` (optional): given a tuple $(x_1,\dots,x_k)$, return True if the underlying subset $\{x_1,\dots,x_k\}$ is forbidden. It is assumed that this function is symmetric in the input tuple. If some of these checks are time-consuming them, only run them when the optional argument `easy` is True.
+# - `forbid` (optional): given a tuple $(x_1,\dots,x_k)$, return True if the underlying subset $\{x_1,\dots,x_k\}$ is forbidden. It is assumed that this function is symmetric in the input tuple. If some of these checks are time-consuming, only run them when the optional argument `easy` is True.
 
 def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
     apply_group_elem = methods['apply_group_elem']
@@ -212,7 +223,7 @@ def extend_orbit_tree(G, S, tree, methods, verbose=True, terminate=False):
                 edges = [(M, apply_group_elem(g, M), g) for M in vertices for g in gens]
                 if verbose:
                     print("Edges computed")
-                tmp, d, _ = group_retract(G, vertices, edges)
+                tmp, d, _ = group_retract(G, vertices, edges, forward_only=True)
                 if verbose:
                     print("Retract computed")
             tree[n][mats]['stab'] = G1
