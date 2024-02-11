@@ -17,7 +17,8 @@ def cyclic_covers_by_ramification(F, d, M, q=2, delta=0):
     gens = [i for i in R.Generators()]
     U1 = R.sub([d*gens[i] for i in range(len(gens))])
     g = Integer(F.Genus())
-    g1 = g + (d-1)*(g-1) + delta//(1 if q%2==0 else 2)
+    g1 = g + (d-1)*(g-1) + delta//(1 if q%2==0 else 2) # Riemann-Hurwitz
+    # Iterate over points of projective space over Z/dZ.
     for j in itertools.product(range(d), repeat=len(gens)):
         if all(i==0 for i in j):
             continue
@@ -28,7 +29,7 @@ def cyclic_covers_by_ramification(F, d, M, q=2, delta=0):
         U3 = R.sub([U1, U2])
         A = M.AbelianExtension(U3)
         F1 = magma.FunctionField(A)
-        if Integer(F1.Genus()) == g1:
+        if Integer(F1.Genus()) == g1: # Eliminates constant field extensions
             F1.AssignNames('w')
             yield F1
 
