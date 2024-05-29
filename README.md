@@ -26,7 +26,7 @@ In the subdirectory "Part II":
  
 In the subdirectory "Part III":
 
-- `orbits.sage`: Sage subroutines for computing orbit representatives for the action of a finite group on subsets of a finite set.
+- `orbits.sage`: Sage subroutines for computing orbit representatives for the action of a finite group on subsets of a finite set. This code is derived from [this repository](https://github.com/kedlaya/orbits).
 - `linalg.sage`: Sage subroutines for linear algebra.
 - `preamble.sage`: Common declarations for the notebooks in this folder. This includes some initialization code   plus a function `closeout` run at the end to report results.
 - A series of Jupyter notebooks covering the Brill-Noether strata in genus 6. These all require Magma and `polys.xlsx`.
