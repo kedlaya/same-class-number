@@ -159,8 +159,8 @@ def _nojac_serre(pol, q=2, alert=False, blocklist=None):
                 delta = pol0.degree() - 2*h.degree() + 1
                 rank0 = max(pol0.degree()-i for i in range(pol0.degree()+1) if pol0[i]%2)
                 rank1 = max(h.degree()-i for i in range(h.degree()+1) if h[i]%2)
-                h2 = h.reciprocal_transform(q=2)
-                if delta >= 0 and check_curve_positivity(h2, h.degree()) and \
+                h2 = h.reciprocal_transform(q=q)
+                if delta >= 0 and check_curve_positivity(h2, h.degree(), q=q) and \
                     (q%2 or (rank0 - 2*rank1 + 1 in range(delta+1))) and \
                     (not blocklist or h2 not in blocklist[h.degree()]):
                     # Check the Castelnuovo-Severi inequality.
@@ -179,7 +179,7 @@ def _nojac_serre(pol, q=2, alert=False, blocklist=None):
         if alert:
             print(res, h0, h1)
         if alert and res <= 10:
-            print("Alert: {} {} {} {}".format(res, pol, h0.reciprocal_transform(q=2), \
-                                                        h1.reciprocal_transform(q=2)))
+            print("Alert: {} {} {} {}".format(res, pol, h0.reciprocal_transform(q), \
+                                                        h1.reciprocal_transform(q)))
    
 
