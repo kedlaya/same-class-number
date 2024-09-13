@@ -17,7 +17,7 @@ def trace_from_weil_poly(u, n):
     return [-l[i]*i for i in range(1, n+1)]
  
 # Given the Weil polynomial of a curve over F_q, return the first n point counts.
-def point_count_from_weil_poly(u, n, q=2):
+def point_count_from_weil_poly(u, n, q):
     tmp = trace_from_weil_poly(u, n)
     return [q^i+1-tmp[i-1] for i in range(1, n+1)]
 
@@ -26,11 +26,11 @@ def place_count_from_point_count(s, n):
     return [sum(moebius(j)*s[i//j-1] for j in divisors(i))//i for i in range(1, n+1)]
     
 # Given the Weil polynomial of a curve over F_q, return the first n place counts.
-def place_count_from_weil_poly(u, n, q=2):
+def place_count_from_weil_poly(u, n, q):
     return place_count_from_point_count(point_count_from_weil_poly(u, n, q=q), n)
     
 # Given the Weil polynomial of a curve over F_q, return True if its first n place counts are nonnegative.
-def check_curve_positivity(u, n, q=2):
+def check_curve_positivity(u, n, q):
     s = place_count_from_weil_poly(u, n, q=q)
     return all(_ >= 0 for _ in s)
 
@@ -39,14 +39,14 @@ def point_count_from_place_count(s, n):
     return [sum(s[j-1]*j for j in divisors(i)) for i in range(1,n+1)]
     
 # Given point counts of a curve of a given genus, return its Weil polynomial.
-def weil_poly_from_point_count(l, d, q=2):
+def weil_poly_from_point_count(l, d, q):
     P.<T> = QQ[]
     Q.<t> = PowerSeriesRing(QQ)
     u = sum(l[i-1]*t^i/i for i in range(1,d+1))
     v = exp(u)*(1-t)*(1-q*t)
     l2 = [v[i] for i in range(d+1)]
     for i in range(1, d+1):
-        l2.append(2^i*v[d-i])
+        l2.append(q^i*v[d-i])
     return P(l2).reverse()
 
 # Identify all Weil polynomials with specified initial Frobenius traces.
@@ -103,7 +103,7 @@ def weil_poly_from_label(P, s):
     
 # Compute the "modified reduced resultant" of two real Weil polynomials in the sense of Howe-Lauter.
 # This function is taken from LMFDB and is originally due to Everett Howe (ported from Magma).
-def modified_reduced_resultant(h1, h2, q=2):
+def modified_reduced_resultant(h1, h2, q):
     """
     Suppose ``h1`` and ``h2`` are real Weil `q`-polynomials (assumed to be coprime to one
     another), with associated Frobenius elements ``pi1`` and ``pi2`` in the centers of
@@ -134,10 +134,10 @@ def modified_reduced_resultant(h1, h2, q=2):
 # no Jacobian over F_q with this Weil polynomial.
 # The resultant 1 case is based on code from LMFDB due to Everett Howe (ported from Magma).
 # We also implement a form of the resultant 2 case, using the Castelnuovo-Severi inequality and
-# the Deuring-Shafarevich formula.
+# the Deuring-Shafarevich formula; do not enable unless you know what you are doing!
 # If blocklist is specified, it should be a dictionary in which blocklist[d] is a list of Weil polynomials
 # of degree 2*d which are known not to occur for Jacobians.
-def _nojac_serre(pol, q=2, alert=False, blocklist=None):
+def _nojac_serre(pol, q, alert=False, castelnuovo=False, blocklist=None):
     pol0 = pol.trace_polynomial()[0]
     irred_factors = [f for (f, _) in pol0.factor()]
     n = len(irred_factors)
@@ -152,7 +152,7 @@ def _nojac_serre(pol, q=2, alert=False, blocklist=None):
         res = modified_reduced_resultant(h0, h1, q=q)
         if res == 1:
             return True
-        if res == 2:
+        if res == 2 and castelnuovo:
             h0full = prod(f^e for (f,e) in pol0.factor() if h0%f == 0)
             h1full = pol0 // h0full
             for h in (h0full, h1full):
@@ -163,23 +163,23 @@ def _nojac_serre(pol, q=2, alert=False, blocklist=None):
                 if delta >= 0 and check_curve_positivity(h2, h.degree(), q=q) and \
                     (q%2 or (rank0 - 2*rank1 + 1 in range(delta+1))) and \
                     (not blocklist or h2 not in blocklist[h.degree()]):
+                    if alert:
+                        print("Alert: {} {}".format(pol, h2))
                     # Check the Castelnuovo-Severi inequality.
+                    # Warning: this assumes among other things that h2 really comes from a curve.
                     res2list.append(h.degree())
                     if len(res2list) >= 2:
                         res2list.sort()
-                        if 2*res2list[0] + 2*res2list[1] < pol.degree():
-                            if alert:
-                                print("Alert: Castelnuovo-Severi inequality triggered")
+                        if 2*res2list[0] + 2*res2list[1] + 1 < 2*pol.degree():
+                            print("Alert: Castelnuovo-Severi inequality triggered: {}".format(res2list))
                             return True
-                    if alert:
-                        print("Alert: {} {}".format(pol, h2))
                     break
             else:
                 return True
         if alert:
             print(res, h0, h1)
         if alert and res <= 10:
-            print("Alert: {} {} {} {}".format(res, pol, h0.reciprocal_transform(q), \
-                                                        h1.reciprocal_transform(q)))
+            print("Alert: {} {} {} {}".format(res, pol, h0.reciprocal_transform(q=q), \
+                                                        h1.reciprocal_transform(q=q)))
    
 
